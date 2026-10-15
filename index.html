@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<!--
+  ONLINE REGISTRATION PAGE (the page visitors open on their phones).
+  To change the event name: search for  EDIT HERE  below (2 places).
+  Hosted on GitHub Pages (permanent link). Registrations are saved to Firebase
+  Firestore; the main laptop pulls them into registrations.csv automatically.
+  Put your Firebase details in firebaseConfig (search: EDIT HERE (Firebase)).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Register - LANKAPAK 2026</title> <!-- EDIT HERE (event name) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2F6EC;--card:#fff;--ink:#1E2A18;--muted:#5C6A52;--line:#D2DEC6;--accent:#3B7D22;--accent-ink:#fff;--err:#B42318;--field:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#10180D;--card:#182212;--ink:#EBF3E4;--muted:#A0B394;--line:#2B3A24;--accent:#8CC760;--accent-ink:#10200A;--err:#FF8A7A;--field:#10180D}}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5}
+main{max-width:520px;margin:0 auto;padding:28px 16px 48px}
+.logo{display:block;max-height:110px;max-width:240px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;margin-bottom:14px}
+h1{font-size:clamp(1.8rem,7vw,2.4rem);line-height:1.1;margin:0 0 8px;font-weight:800;letter-spacing:-.02em}
+.lead{margin:0 0 22px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.field{margin-bottom:16px}
+label{display:block;font-weight:600;margin-bottom:6px}
+label small{font-weight:400;color:var(--muted)}
+input{width:100%;height:48px;padding:0 14px;font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1.5px solid var(--line);border-radius:10px}
+input:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input[aria-invalid="true"]{border-color:var(--err)}
+.err{color:var(--err);font-size:.9rem;margin:6px 0 0}
+.err:empty{display:none}
+button{width:100%;height:52px;font:inherit;font-size:1.05rem;font-weight:600;cursor:pointer;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);margin-top:6px}
+button:disabled{opacity:.6;cursor:wait}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.ok{text-align:center;padding:12px 0}
+.ok h2{margin:0 0 8px;font-size:1.6rem}
+.ok p{margin:0 0 8px;color:var(--muted)}
+.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line);margin-top:14px}
+.opts{border:1.5px solid var(--line);border-radius:10px;padding:10px 14px 12px;margin:0;min-width:0}
+.opts legend{font-weight:600;padding:0 6px}
+.opts label.opt{display:flex;align-items:center;gap:12px;font-weight:400;margin:0;padding:9px 0;cursor:pointer}
+.opts input[type=checkbox]{width:24px;height:24px;flex:none;margin:0;padding:0;accent-color:var(--accent)}
+.opts input[type=text]{margin-top:4px}
+.opts[aria-invalid="true"]{border-color:var(--err)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <img class="logo" src="logo.jpg" alt="Logo" onerror="this.hidden=true">
+  <h1>LANKAPAK 2026</h1> <!-- EDIT HERE (event name) -->
+  <p class="lead"><strong>Visitor registration.</strong> Register now and collect your badge at the registration desk when you arrive.</p>
+
+  <div class="card" id="formCard">
+    <div class="field"><label for="name">Full name</label><input id="name" maxlength="200" autocomplete="name"><p class="err" id="e-name"></p></div>
+    <div class="field"><label for="email">Email</label><input id="email" maxlength="254" type="email" inputmode="email" autocomplete="email"><p class="err" id="e-email"></p></div>
+    <div class="field"><label for="phone">Phone <small>(optional)</small></label><input id="phone" maxlength="30" type="tel" inputmode="tel" autocomplete="tel"><p class="err" id="e-phone"></p></div>
+    <div class="field"><label for="company">Company name</label><input id="company" maxlength="200" autocomplete="organization"><p class="err" id="e-company"></p></div>
+    <div class="field"><label for="designation">Designation</label><input id="designation" maxlength="200" autocomplete="organization-title"><p class="err" id="e-designation"></p></div>
+    <div class="field">
+      <fieldset class="opts" id="heard" tabindex="-1">
+        <legend>How did you find out about LANKAPAK?</legend>
+        <label class="opt"><input type="checkbox" name="heard" value="Social media"> Social media</label>
+        <label class="opt"><input type="checkbox" name="heard" value="Invitation"> Invitation</label>
+        <label class="opt"><input type="checkbox" name="heard" value="Posters"> Posters</label>
+        <label class="opt"><input type="checkbox" name="heard" value="Friend or colleague"> Friend or colleague</label>
+        <label class="opt"><input type="checkbox" name="heard" value="Other" id="heardOther"> Other</label>
+        <input id="heardOtherText" type="text" maxlength="100" placeholder="Please tell us where" hidden>
+      </fieldset>
+      <p class="err" id="e-heard"></p>
+    </div>
+    <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" tabindex="-1" autocomplete="off"></div>
+    <p class="err" id="e-form" role="alert"></p>
+    <button id="submitBtn" type="button">Register</button>
+  </div>
+
+  <div class="card ok" id="doneCard" hidden>
+    <h2 id="doneTitle">You're registered.</h2>
+    <p>Thank you! Please come to the registration desk at the event to collect your badge.</p>
+    <button class="ghost" id="againBtn" type="button">Register another person</button>
+  </div>
+</main>
+<script type="module">
+// EDIT HERE (Firebase): paste the values from Firebase console > Project settings > Your apps > Web app
+var firebaseConfig = {
+  apiKey: "AIzaSyBaHpCogsibVYzXVcWg2N08GbRdhC5fDRk",
+  authDomain: "lankapak-2026.firebaseapp.com",
+  projectId: "lankapak-2026",
+  appId: "1:288672919334:web:8d3f6469f1a5a099b71be7"
+};
+try {
+  var A = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
+  var F = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+  var app = A.initializeApp(firebaseConfig);
+  window.__fb = { db: F.getFirestore(app), doc: F.doc, setDoc: F.setDoc, serverTimestamp: F.serverTimestamp };
+} catch (e) { window.__fbError = String(e && e.message || e); }
+</script>
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var FIELDS = ["name","email","phone","company","designation"];
+  function setErr(id, msg){
+    $("e-" + id).textContent = msg || "";
+    $(id).setAttribute("aria-invalid", msg ? "true" : "false");
+  }
+  function heardValue(){
+    var out = [];
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="heard"]:checked'), function(c){
+      if (c.value === "Other") { var t = $("heardOtherText").value.trim(); out.push(t ? "Other: " + t : "Other"); }
+      else out.push(c.value);
+    });
+    return out.join("; ");
+  }
+  $("heardOther").addEventListener("change", function(){ $("heardOtherText").hidden = !this.checked; if (this.checked) $("heardOtherText").focus(); });
+  function validate(v){
+    var ok = true, first = null;
+    function bad(f, m){ setErr(f, m); if (!first) first = f; ok = false; }
+    FIELDS.forEach(function(f){ setErr(f, ""); }); setErr("heard", "");
+    if (!v.name) bad("name", "Enter your full name.");
+    if (!v.email) bad("email", "Enter your email address.");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) bad("email", "Enter a valid email, like name@company.com.");
+    if (v.phone && !/^[+\d][\d\s\-()]{5,}$/.test(v.phone)) bad("phone", "Enter a valid phone number, or leave it blank.");
+    if (!v.company) bad("company", "Enter your company name.");
+    if (!v.designation) bad("designation", "Enter your designation.");
+    if (!v.heard) bad("heard", "Please tick at least one option.");
+    else if ($("heardOther").checked && !$("heardOtherText").value.trim()) bad("heard", "Please tell us where you heard about us.");
+    if (first) $(first).focus();
+    return ok;
+  }
+  function submit(){
+    $("e-form").textContent = "";
+    var v = {};
+    FIELDS.forEach(function(f){ v[f] = $(f).value.trim(); });
+    v.website = $("website").value;
+    v.heard = heardValue();
+    if (!validate(v)) return;
+    if (v.website) { done(v); return; }  // hidden field only bots fill in
+    var fb = window.__fb;
+    if (!fb) { $("e-form").textContent = "The registration service could not load (" + (window.__fbError || "still loading") + "). Check your internet and reload the page."; return; }
+    var btn = $("submitBtn"); btn.disabled = true; btn.textContent = "Registering...";
+    var doc = {name:v.name, email:v.email, phone:v.phone, company:v.company, designation:v.designation, heard:v.heard, createdAt:fb.serverTimestamp()};
+    var save = fb.setDoc(fb.doc(fb.db, "registrations", v.email.toLowerCase()), doc);
+    var timeout = new Promise(function(_, rej){ setTimeout(function(){ rej({code:"timeout"}); }, 15000); });
+    Promise.race([save, timeout])
+      .then(function(){ done(v); })
+      .catch(function(e){
+        var c = e && e.code;
+        if (c === "permission-denied") setErr("email", "This email is already registered. Please check with the desk."), $("email").focus();
+        else if (c === "timeout") $("e-form").textContent = "Could not confirm your registration. Check your internet and try again in a moment.";
+        else $("e-form").textContent = "Could not save your registration. Please try again.";
+      })
+      .then(function(){ btn.disabled = false; btn.textContent = "Register"; });
+  }
+  function done(v){
+    $("doneTitle").textContent = "You're registered, " + v.name.split(" ")[0] + ".";
+    $("formCard").hidden = true; $("doneCard").hidden = false;
+    window.scrollTo(0, 0);
+  }
+  $("submitBtn").addEventListener("click", submit);
+  FIELDS.forEach(function(f){ $(f).addEventListener("keydown", function(e){ if (e.key === "Enter") submit(); }); });
+  $("againBtn").addEventListener("click", function(){
+    FIELDS.forEach(function(f){ $(f).value = ""; setErr(f, ""); });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="heard"]'), function(c){ c.checked = false; });
+    $("heardOtherText").value = ""; $("heardOtherText").hidden = true; setErr("heard", "");
+    $("doneCard").hidden = true; $("formCard").hidden = false; $("name").focus();
+  });
+})();
+</script>
+</body>
+</html>
