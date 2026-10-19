@@ -4,7 +4,7 @@
   To change the event name: search for  EDIT HERE  below (2 places).
   Hosted on GitHub Pages (permanent link). Registrations are saved to Firebase
   Firestore; the main laptop pulls them into registrations.csv automatically.
-  Put your Firebase details in firebaseConfig (search: EDIT HERE (Firebase)).
+  Upload this file to GitHub renamed as index.html (together with logo.jpg).
 -->
 <html lang="en">
 <head>
@@ -88,8 +88,7 @@ button:disabled{opacity:.6;cursor:wait}
 var firebaseConfig = {
   apiKey: "AIzaSyBaHpCogsibVYzXVcWg2N08GbRdhC5fDRk",
   authDomain: "lankapak-2026.firebaseapp.com",
-  projectId: "lankapak-2026",
-  appId: "1:288672919334:web:8d3f6469f1a5a099b71be7"
+  projectId: "lankapak-2026"
 };
 try {
   var A = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
@@ -102,6 +101,7 @@ try {
 (function(){
   var $ = function(id){ return document.getElementById(id); };
   var FIELDS = ["name","email","phone","company","designation"];
+  var pending = {}, saved = {};  // saves still in flight / confirmed, by email (so a retry after a timeout never writes twice)
   function setErr(id, msg){
     $("e-" + id).textContent = msg || "";
     $(id).setAttribute("aria-invalid", msg ? "true" : "false");
@@ -121,6 +121,7 @@ try {
     FIELDS.forEach(function(f){ setErr(f, ""); }); setErr("heard", "");
     if (!v.name) bad("name", "Enter your full name.");
     if (!v.email) bad("email", "Enter your email address.");
+    else if (/[\/\\]/.test(v.email)) bad("email", "Email addresses cannot contain / or \\ characters.");  // the email is the database document ID, which cannot contain a slash
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) bad("email", "Enter a valid email, like name@company.com.");
     if (v.phone && !/^[+\d][\d\s\-()]{5,}$/.test(v.phone)) bad("phone", "Enter a valid phone number, or leave it blank.");
     if (!v.company) bad("company", "Enter your company name.");
@@ -140,16 +141,30 @@ try {
     if (v.website) { done(v); return; }  // hidden field only bots fill in
     var fb = window.__fb;
     if (!fb) { $("e-form").textContent = "The registration service could not load (" + (window.__fbError || "still loading") + "). Check your internet and reload the page."; return; }
+    var key = v.email.toLowerCase();
+    if (saved[key]) { done(v); return; }  // an earlier attempt went through after the "taking longer" message
     var btn = $("submitBtn"); btn.disabled = true; btn.textContent = "Registering...";
-    var doc = {name:v.name, email:v.email, phone:v.phone, company:v.company, designation:v.designation, heard:v.heard, createdAt:fb.serverTimestamp()};
-    var save = fb.setDoc(fb.doc(fb.db, "registrations", v.email.toLowerCase()), doc);
+    var save = pending[key];  // an earlier attempt is still waiting: wait for it instead of writing again
+    if (!save) {
+      try {
+        var doc = {name:v.name, email:v.email, phone:v.phone, company:v.company, designation:v.designation, heard:v.heard, createdAt:fb.serverTimestamp()};
+        save = fb.setDoc(fb.doc(fb.db, "registrations", key), doc);
+      } catch (err) {  // doc() / setDoc() can throw straight away (for example on an invalid document ID)
+        $("e-form").textContent = "Could not save your registration. Please check your email address and try again.";
+        btn.disabled = false; btn.textContent = "Register";
+        return;
+      }
+      pending[key] = save;
+      save.then(function(){ saved[key] = true; delete pending[key]; }, function(){ delete pending[key]; });
+    }
     var timeout = new Promise(function(_, rej){ setTimeout(function(){ rej({code:"timeout"}); }, 15000); });
     Promise.race([save, timeout])
       .then(function(){ done(v); })
       .catch(function(e){
         var c = e && e.code;
-        if (c === "permission-denied") setErr("email", "This email is already registered. Please check with the desk."), $("email").focus();
-        else if (c === "timeout") $("e-form").textContent = "Could not confirm your registration. Check your internet and try again in a moment.";
+        if (c === "permission-denied") $("e-form").textContent = "We could not accept this registration. This email may already be registered, or one of the details was not accepted. Please check what you typed, or ask at the registration desk.";
+        else if (c === "timeout") $("e-form").textContent = "This is taking longer than usual, and your registration may still go through. Wait a few seconds, then tap Register once more. You will not be registered twice.";
+        else if (c === "unavailable") $("e-form").textContent = "No internet connection. Check your connection and tap Register again.";
         else $("e-form").textContent = "Could not save your registration. Please try again.";
       })
       .then(function(){ btn.disabled = false; btn.textContent = "Register"; });
@@ -162,6 +177,7 @@ try {
   $("submitBtn").addEventListener("click", submit);
   FIELDS.forEach(function(f){ $(f).addEventListener("keydown", function(e){ if (e.key === "Enter") submit(); }); });
   $("againBtn").addEventListener("click", function(){
+    saved = {};
     FIELDS.forEach(function(f){ $(f).value = ""; setErr(f, ""); });
     Array.prototype.forEach.call(document.querySelectorAll('input[name="heard"]'), function(c){ c.checked = false; });
     $("heardOtherText").value = ""; $("heardOtherText").hidden = true; setErr("heard", "");
